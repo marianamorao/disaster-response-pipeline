@@ -1,1 +1,140 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Classification Results — Disaster Response</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+    header {
+      background: linear-gradient(135deg, #1a3a5c, #2e7bcf);
+      color: white; padding: 24px 40px;
+    }
+    header h1 { font-size: 1.8rem; font-weight: 700; }
+    header p  { font-size: 0.95rem; opacity: 0.85; margin-top: 4px; }
+
+    nav {
+      background: #1a3a5c; padding: 0 40px;
+      display: flex; gap: 24px;
+    }
+    nav a {
+      color: rgba(255,255,255,0.75); text-decoration: none;
+      padding: 12px 0; font-size: 0.9rem; border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    nav a:hover { color: white; border-bottom-color: #2e7bcf; }
+
+    .container { max-width: 900px; margin: 0 auto; padding: 32px 24px; }
+
+    .query-card {
+      background: white; border-radius: 12px; padding: 24px 28px;
+      margin-bottom: 28px; box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .query-card p { color: #555; margin-bottom: 10px; font-size: 0.9rem; }
+    .query-card .message {
+      font-size: 1.1rem; font-weight: 600; color: #1a3a5c; line-height: 1.5;
+    }
+    .back-link {
+      display: inline-block; margin-top: 14px;
+      color: #2e7bcf; text-decoration: none; font-size: 0.9rem;
+    }
+    .back-link:hover { text-decoration: underline; }
+
+    .results-card {
+      background: white; border-radius: 12px; padding: 24px 28px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .results-card h2 { font-size: 1.05rem; color: #1a3a5c; margin-bottom: 20px; }
+
+    .categories-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 10px;
+    }
+
+    .category-pill {
+      padding: 10px 14px; border-radius: 8px;
+      font-size: 0.85rem; font-weight: 500;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .category-pill.active {
+      background: #e8f4ff; border: 1.5px solid #2e7bcf; color: #1a3a5c;
+    }
+    .category-pill.inactive {
+      background: #f5f5f5; border: 1.5px solid #e0e0e0; color: #aaa;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .active .dot  { background: #2e7bcf; }
+    .inactive .dot { background: #ccc; }
+
+    .summary {
+      margin-top: 20px; padding: 14px 18px;
+      background: #f0f7ff; border-radius: 8px; border-left: 4px solid #2e7bcf;
+      font-size: 0.9rem; color: #1a3a5c;
+    }
+
+    footer {
+      text-align: center; padding: 24px;
+      color: #999; font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🚨 Disaster Response Classifier</h1>
+  <p>NLP-powered message classification for emergency response</p>
+</header>
+
+<nav>
+  <a href="/">Dashboard</a>
+</nav>
+
+<div class="container">
+
+  <div class="query-card">
+    <p>Classified message:</p>
+    <div class="message">"{{ query }}"</div>
+    <a class="back-link" href="/">← Classify another message</a>
+  </div>
+
+  <div class="results-card">
+    <h2>Classification Results</h2>
+
+    <div class="categories-grid">
+      {% for category, value in classification_result.items() %}
+        <div class="category-pill {% if value == 1 %}active{% else %}inactive{% endif %}">
+          <div class="dot"></div>
+          {{ category.replace('_', ' ').title() }}
+        </div>
+      {% endfor %}
+    </div>
+
+    {% set ns = namespace(count=0) %}
+    {% for value in classification_result.values() %}
+      {% if value == 1 %}
+        {% set ns.count = ns.count + 1 %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="summary">
+      <strong>{{ ns.count }}</strong> of {{ classification_result | length }} categories matched.
+      {% if ns.count == 0 %}
+        No emergency categories detected.
+      {% elif ns.count <= 3 %}
+        This appears to be a focused request.
+      {% else %}
+        This message covers multiple emergency areas.
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+<footer>Udacity Data Science Nanodegree — Disaster Response Pipeline Project by M.Morao </footer>
+
+</body>
+</html>
