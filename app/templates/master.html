@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Disaster Response Classifier</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', Arial, sans-serif; background: #f4f6f9; color: #333; }
+
+    header {
+      background: linear-gradient(135deg, #1a3a5c, #2e7bcf);
+      color: white; padding: 24px 40px;
+    }
+    header h1 { font-size: 1.8rem; font-weight: 700; }
+    header p  { font-size: 0.95rem; opacity: 0.85; margin-top: 4px; }
+
+    nav {
+      background: #1a3a5c; padding: 0 40px;
+      display: flex; gap: 24px;
+    }
+    nav a {
+      color: rgba(255,255,255,0.75); text-decoration: none;
+      padding: 12px 0; font-size: 0.9rem; border-bottom: 3px solid transparent;
+      transition: all 0.2s;
+    }
+    nav a:hover, nav a.active { color: white; border-bottom-color: #2e7bcf; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 32px 24px; }
+
+    .search-card {
+      background: white; border-radius: 12px;
+      padding: 28px 32px; margin-bottom: 32px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .search-card h2 { margin-bottom: 16px; font-size: 1.1rem; color: #1a3a5c; }
+    .search-row { display: flex; gap: 12px; }
+    .search-row input {
+      flex: 1; padding: 12px 16px; border: 2px solid #dde3ec;
+      border-radius: 8px; font-size: 1rem; outline: none;
+      transition: border-color 0.2s;
+    }
+    .search-row input:focus { border-color: #2e7bcf; }
+    .search-row button {
+      background: #2e7bcf; color: white; border: none;
+      padding: 12px 24px; border-radius: 8px; font-size: 1rem;
+      cursor: pointer; font-weight: 600; transition: background 0.2s;
+    }
+    .search-row button:hover { background: #1a5fa8; }
+
+    .charts-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 24px;
+    }
+    .chart-card {
+      background: white; border-radius: 12px; padding: 24px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.07);
+    }
+    .chart-card.wide { grid-column: 1 / -1; }
+    .chart-card h3 { font-size: 0.95rem; color: #555; margin-bottom: 16px; font-weight: 600; }
+    .chart-card canvas { max-height: 280px; }
+
+    footer {
+      text-align: center; padding: 24px;
+      color: #999; font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <h1>🚨 Disaster Response Classifier</h1>
+  <p>NLP-powered message classification for emergency response</p>
+</header>
+
+<nav>
+  <a href="/" class="active">Dashboard</a>
+</nav>
+
+<div class="container">
+
+  <div class="search-card">
+    <h2>Classify a Disaster Message</h2>
+    <form action="/go" method="get">
+      <div class="search-row">
+        <input type="text" name="query"
+               placeholder="e.g. We need food and clean water after the flood…"
+               required />
+        <button type="submit">Classify</button>
+      </div>
+    </form>
+  </div>
+
+  <div class="charts-grid">
+
+    <div class="chart-card">
+      <h3>Distribution of Message Genres</h3>
+      <canvas id="genreBar"></canvas>
+    </div>
+
+    <div class="chart-card">
+      <h3>Genre Share</h3>
+      <canvas id="genrePie"></canvas>
+    </div>
+
+    <div class="chart-card wide">
+      <h3>Top 10 Most Frequent Categories</h3>
+      <canvas id="categoryBar"></canvas>
+    </div>
+
+  </div>
+</div>
+
+<footer>Udacity Data Science Nanodegree — Disaster Response Pipeline Project by M.Morao</footer>
+
+<script>
+  const data = {{ chart_data | safe }};
+
+  const COLORS = [
+    '#2e7bcf','#e8543a','#27ae60','#f39c12',
+    '#8e44ad','#16a085','#d35400','#2980b9',
+    '#1abc9c','#e74c3c'
+  ];
+
+  // Genre Bar
+  new Chart(document.getElementById('genreBar'), {
+    type: 'bar',
+    data: {
+      labels: data.genre_names,
+      datasets: [{
+        label: 'Messages',
+        data: data.genre_values,
+        backgroundColor: COLORS.slice(0, data.genre_names.length),
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { stepSize: 2000 } } }
+    }
+  });
+
+  // Genre Pie
+  new Chart(document.getElementById('genrePie'), {
+    type: 'doughnut',
+    data: {
+      labels: data.genre_names,
+      datasets: [{
+        data: data.genre_values,
+        backgroundColor: COLORS.slice(0, data.genre_names.length),
+        borderWidth: 2
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } }
+    }
+  });
+
+  // Top Categories Bar
+  new Chart(document.getElementById('categoryBar'), {
+    type: 'bar',
+    data: {
+      labels: data.top_categories,
+      datasets: [{
+        label: 'Count',
+        data: data.top_counts,
+        backgroundColor: COLORS,
+        borderRadius: 6
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true },
+        x: { ticks: { maxRotation: 30, minRotation: 20 } }
+      }
+    }
+  });
+</script>
+
+</body>
+</html>
