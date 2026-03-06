@@ -15,30 +15,44 @@ import pandas as pd
 from flask import Flask, render_template, request
 from sqlalchemy import create_engine
 
+import nltk
+nltk.data.path.append(r'C:\nltk_data')
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
+nltk.download('punkt',     quiet=True)
+nltk.download('punkt_tab', quiet=True)
+nltk.download('wordnet',   quiet=True)
+nltk.download('stopwords', quiet=True)
+
 app = Flask(__name__)
 
-# Ruta absoluta al DB y al modelo, sin importar desde donde se ejecute
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-DB_PATH  = os.path.join(BASE_DIR, '..', 'data', 'DisasterResponse.db')
+BASE_DIR   = os.path.dirname(os.path.abspath(__file__))
+DB_PATH    = os.path.join(BASE_DIR, '..', 'data', 'DisasterResponse.db')
 MODEL_PATH = os.path.join(BASE_DIR, '..', 'models', 'classifier.pkl')
 
 
 def tokenize(text):
     """
-    Tokenize and clean a text string.
+    Tokenize and clean a text string using NLTK.
     Must match the tokenizer used during training.
+
+    Steps:
+    - Normalize to lowercase and remove punctuation.
+    - Tokenize using NLTK word_tokenize.
+    - Lemmatize each token using WordNetLemmatizer.
     """
-    stop_words = {
-        'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to',
-        'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were',
-        'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
-        'will', 'would', 'could', 'should', 'may', 'might', 'this', 'that',
-        'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
-        'not', 'no', 'so', 'as', 'if', 'than', 'then', 'when', 'where'
-    }
-    text = re.sub(r'[^a-zA-Z0-9]', ' ', str(text).lower())
-    tokens = text.split()
-    return [t for t in tokens if t not in stop_words and len(t) > 2]
+    # Normalize: lowercase and remove punctuation
+    text = re.sub(r'[^a-zA-Z0-9]', ' ', text.lower())
+
+    # Tokenize using NLTK
+    tokens = word_tokenize(text)
+
+    # Lemmatize
+    lemmatizer = WordNetLemmatizer()
+    clean_tokens = [lemmatizer.lemmatize(tok).strip() for tok in tokens if len(tok) > 2]
+
+    return clean_tokens
 
 
 
@@ -64,7 +78,7 @@ def index():
     genre_names  = list(genre_counts.index)
     genre_values = [int(v) for v in genre_counts.values]
 
-    category_cols  = df.drop(columns=['id', 'message', 'original', 'genre'])
+    category_cols   = df.drop(columns=['id', 'message', 'original', 'genre'])
     category_totals = category_cols.sum().sort_values(ascending=False).head(10)
     top_categories  = list(category_totals.index)
     top_counts      = [int(v) for v in category_totals.values]
