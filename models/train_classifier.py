@@ -15,12 +15,22 @@ import re
 import pandas as pd
 from sqlalchemy import create_engine
 
+import nltk
+nltk.data.path.append(r'C:\nltk_data')
+from nltk.tokenize import word_tokenize
+from nltk.stem import WordNetLemmatizer
+
 from sklearn.pipeline import Pipeline
 from sklearn.feature_extraction.text import CountVectorizer, TfidfTransformer
 from sklearn.multioutput import MultiOutputClassifier
 from sklearn.svm import LinearSVC
 from sklearn.model_selection import train_test_split, GridSearchCV
 from sklearn.metrics import classification_report
+
+nltk.download('punkt', quiet=True)
+nltk.download('punkt_tab', quiet=True)
+nltk.download('wordnet', quiet=True)
+nltk.download('stopwords', quiet=True)
 
 
 def load_data(database_filepath):
@@ -57,12 +67,12 @@ def load_data(database_filepath):
 
 def tokenize(text):
     """
-    Tokenize and clean a text string.
+    Tokenize and clean a text string using NLTK.
 
     Steps:
     - Normalize to lowercase and remove punctuation.
-    - Split into words.
-    - Remove common English stop words.
+    - Tokenize using NLTK word_tokenize.
+    - Lemmatize each token using WordNetLemmatizer.
 
     Parameters
     ----------
@@ -72,19 +82,19 @@ def tokenize(text):
     Returns
     -------
     list of str
-        List of cleaned tokens.
+        List of cleaned, lemmatized tokens.
     """
-    stop_words = {
-        'a', 'an', 'the', 'and', 'or', 'but', 'in', 'on', 'at', 'to',
-        'for', 'of', 'with', 'by', 'from', 'is', 'are', 'was', 'were',
-        'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did',
-        'will', 'would', 'could', 'should', 'may', 'might', 'this', 'that',
-        'these', 'those', 'i', 'you', 'he', 'she', 'it', 'we', 'they',
-        'not', 'no', 'so', 'as', 'if', 'than', 'then', 'when', 'where'
-    }
-    text = re.sub(r'[^a-zA-Z0-9]', ' ', str(text).lower())
-    tokens = text.split()
-    return [t for t in tokens if t not in stop_words and len(t) > 2]
+    # Normalize: lowercase and remove punctuation
+    text = re.sub(r'[^a-zA-Z0-9]', ' ', text.lower())
+
+    # Tokenize using NLTK
+    tokens = word_tokenize(text)
+
+    # Lemmatize
+    lemmatizer = WordNetLemmatizer()
+    clean_tokens = [lemmatizer.lemmatize(tok).strip() for tok in tokens if len(tok) > 2]
+
+    return clean_tokens
 
 
 def build_model():
